@@ -4,7 +4,7 @@
 #  on them in a database for displaying on a webpage (or other front-end). It will
 #  use the NMAP MAC Vendor database to lookup vendor information.
 #
-# Copyright (c) 2015 Aaron Linville <aaron@linville.org>
+# Copyright (c) 2016 Aaron Linville <aaron@linville.org>
 
 import argparse
 from ConfigParser import SafeConfigParser
@@ -13,6 +13,7 @@ import re
 import socket
 import subprocess
 import sys
+import os.path
 
 def get_arp_table(sleep_proxy_servers):
     '''Scans the ARP tables and returns a dict of all the entries.'''
@@ -73,11 +74,22 @@ def update_entry(entry):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Track devices on your local subnet.")
     parser.add_argument("-v", "--verbose", action="store_true", help = "Verbose output")
+    parser.add_argument("-c", "--config", type=argparse.FileType('rb', 0), help = "Config file")
     
     args = parser.parse_args()
     
     config = SafeConfigParser()
-    config.read('config.conf')
+    
+    if args.config is not None:
+        config.read(args.config)
+    elif os.path.isfile('~/.nettrack.conf'):
+        config.read('~/.nettrack.conf')
+    elif os.path.isfile('/etc/nettrack.conf'):
+        config.read('/etc/nettrack.conf')
+    else:
+        print "Can't find a config file."
+        sys.exit(1)
+    
     
     if not (config.has_option("Database", "database") and
             config.has_option("Database", "username") and 

@@ -23,5 +23,5 @@ Add the following to your crontab.
 
 ```Bash
 # Update macaddress database
-*/15 * * * * /home/user/nettrack/nettrack.py
+*/15 * * * * /home/user/nettrack/nettrack.py -c /path/to/config.conf
 ```
