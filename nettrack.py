@@ -81,20 +81,21 @@ if __name__ == "__main__":
     config = SafeConfigParser()
     
     if args.config is not None:
-        config.read(args.config)
-    elif os.path.isfile('~/.nettrack.conf'):
-        config.read('~/.nettrack.conf')
+        print(args.config.name)
+        config.read(args.config.name)
+    elif os.path.isfile(os.path.expanduser('~/.nettrack.conf')):
+        config.read(os.path.expanduser('~/.nettrack.conf'))
     elif os.path.isfile('/etc/nettrack.conf'):
         config.read('/etc/nettrack.conf')
     else:
-        print "Can't find a config file."
+        print("Can't find a config file.")
         sys.exit(1)
     
     
     if not (config.has_option("Database", "database") and
             config.has_option("Database", "username") and 
             config.has_option("Database", "password")):
-        print "Database config isn't set."
+        print("Database config isn't set.")
         sys.exit(1)
     
     
@@ -104,7 +105,7 @@ if __name__ == "__main__":
                              passwd=config.get('Database', 'password'))
         cursor = db.cursor()
     except ValueError, e:
-        print 'MySQL failed: %s' % e
+        print("MySQL failed: %s" % e)
         sys.exit(1)
     
     sps_conf = config.items("Sleep Proxy Servers")
