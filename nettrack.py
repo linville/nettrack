@@ -15,30 +15,42 @@ import subprocess
 import sys
 import os.path
 
+verbose = None
+
 def get_arp_table(sleep_proxy_servers):
     '''Scans the ARP tables and returns a dict of all the entries.'''
     entries = []
     
     cmd = subprocess.Popen('arp -a', shell=True, stdout=subprocess.PIPE)
     for idx, line in enumerate(cmd.stdout):
+        if verbose:
+            print("Parsing: %s" % (line))
+        
         if(idx == 0):
             continue
         
         columns = line.split()
         
         if len(columns) < 4 or len(columns) > 5:
-            print "Unexpected arp output: %s" % (line)
+            print("Unexpected arp output: %s" % (line))
             continue
         
         fullhostname = columns[0]
         host = re.sub('\.localnet$', '', fullhostname)
-        ip = socket.gethostbyname(fullhostname)
+        try:
+            ip = socket.gethostbyname(fullhostname)
+        except:
+            print("Couldn't resolve host: %s" % (fullhostname))
+            continue
+        
         address = columns[1]
         
         sleeping_entry = False
         
         for server in sleep_proxy_servers:
-            print server
+            if verbose:
+                print(server)
+            
             # Ascertain if this is a sleep proxy server itself or the sleep proxy
             # server masquerading as a sleeping host.
             if fullhostname == server["host"] and address == server["address"]:
@@ -68,9 +80,6 @@ def dot_replace(matchobj):
     elif  matchobj.group(0) == ':':
         return ''
 
-def update_entry(entry):
-    print entry
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Track devices on your local subnet.")
     parser.add_argument("-v", "--verbose", action="store_true", help = "Verbose output")
@@ -81,7 +90,6 @@ if __name__ == "__main__":
     config = SafeConfigParser()
     
     if args.config is not None:
-        print(args.config.name)
         config.read(args.config.name)
     elif os.path.isfile(os.path.expanduser('~/.nettrack.conf')):
         config.read(os.path.expanduser('~/.nettrack.conf'))
@@ -90,6 +98,9 @@ if __name__ == "__main__":
     else:
         print("Can't find a config file.")
         sys.exit(1)
+    
+    if args.verbose:
+        verbose = True
     
     
     if not (config.has_option("Database", "database") and
@@ -121,7 +132,7 @@ if __name__ == "__main__":
             
             sleep_proxy_servers.append(entry)
         else:
-            print "Can't discern host/MAC from %s" % (server)
+            print("Can't discern host/MAC from %s" % (server))
             continue
     
     mac_db_file = open(config.get('Files', 'macvendordb'),'r')
@@ -132,7 +143,7 @@ if __name__ == "__main__":
     for entry in entries:
         getprefix = re.search('.*([a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}).*', entry["address"], re.IGNORECASE)
         if getprefix is None:
-            print "Malformed MAC Address: %s" % (entry["address"])
+            print("Malformed MAC Address: %s" % (entry["address"]))
             continue
         
         prefix = re.sub(':', dot_replace, getprefix.group(1))[0:6]
@@ -146,11 +157,10 @@ if __name__ == "__main__":
                 vendor = mac_entry[7:].strip()
                 break
         
-        if args.verbose:
-            print "Host: %s %s" % (entry["host"], "(Sleeping)" if entry["sleeping"] else "")
-            print "       IP: %s" % entry["ip"]
-            print "  Address: %s (%s)" % (entry["address"], vendor)
-            print ""
+        if verbose:
+            print("Host: %s %s" % (entry["host"], "(Sleeping)" if entry["sleeping"] else ""))
+            print("       IP: %s" % entry["ip"])
+            print("  Address: %s (%s)\n" % (entry["address"], vendor))
         
         if entry["sleeping"]:
             cursor.execute("UPDATE macaddresses "
