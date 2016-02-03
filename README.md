@@ -2,8 +2,8 @@ nettrack.py
 ===========
 nettrack is a python script to track devices on your local network and store statistics
 in for displaying on a webpage (or other front-end). It periodically scans
-the arp tables, looks up the vendor information (Organizationally Unique Identifiers
-- OUIs) and logs it in the database.
+the arp tables, looks up the vendor information (Organizationally Unique Identifiers -
+OUIs) and logs it in the database.
 
 nettrack can be configured with a static list of Bonjour sleep proxy servers and will
 update the database when it detects a sleep proxy server is answering ARP requests on
