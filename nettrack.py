@@ -7,13 +7,17 @@
 # Copyright (c) 2016 Aaron Linville <aaron@linville.org>
 
 import argparse
-from ConfigParser import SafeConfigParser
 import MySQLdb
 import re
 import socket
 import subprocess
 import sys
 import os.path
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 verbose = None
 
@@ -87,7 +91,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    config = SafeConfigParser()
+    config = configparser.SafeConfigParser()
     
     if args.config is not None:
         config.read(args.config.name)
@@ -115,7 +119,7 @@ if __name__ == "__main__":
                              user=config.get('Database', 'username'),
                              passwd=config.get('Database', 'password'))
         cursor = db.cursor()
-    except ValueError, e:
+    except ValueError as e:
         print("MySQL failed: %s" % e)
         sys.exit(1)
     
@@ -135,8 +139,13 @@ if __name__ == "__main__":
             print("Can't discern host/MAC from %s" % (server))
             continue
     
-    mac_db_file = open(config.get('Files', 'macvendordb'),'r')
-    macs_lines = mac_db_file.readlines()
+    macs_lines = []
+    
+    try:
+        mac_db_file = open(config.get('Files', 'macvendordb'),'r')
+        macs_lines = mac_db_file.readlines()
+    except:
+        print("Failed to read the MAC Vendor database.")
     
     entries = get_arp_table(sleep_proxy_servers)
     
