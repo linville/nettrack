@@ -1,4 +1,4 @@
-#!/usr/local/bin/python -B
+#!/usr/bin/env python3 -B
 
 # nettrack - Track devices on your local network using arp tables and keep stats
 #  on them in a database for displaying on a webpage (or other front-end). It will
@@ -7,7 +7,7 @@
 # Copyright (c) 2016 Aaron Linville <aaron@linville.org>
 
 import argparse
-import MySQLdb
+import pymysql.cursors
 import re
 import socket
 import subprocess
@@ -40,7 +40,7 @@ def get_arp_table(sleep_proxy_servers):
             continue
         
         fullhostname = columns[0]
-        host = re.sub('\.localnet$', '', fullhostname)
+        host = re.sub('\.localnet$', '', fullhostname.decode("utf-8"))
         try:
             ip = socket.gethostbyname(fullhostname)
         except:
@@ -115,12 +115,12 @@ if __name__ == "__main__":
     
     
     try:
-        db = MySQLdb.connect(db=config.get('Database', 'database'),
+        db = pymysql.connect(db=config.get('Database', 'database'),
                              user=config.get('Database', 'username'),
                              passwd=config.get('Database', 'password'))
         cursor = db.cursor()
     except ValueError as e:
-        print("MySQL failed: %s" % e)
+        print("PyMySQL failed: %s" % e)
         sys.exit(1)
     
     sps_conf = config.items("Sleep Proxy Servers")
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     entries = get_arp_table(sleep_proxy_servers)
     
     for entry in entries:
-        getprefix = re.search('.*([a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}).*', entry["address"], re.IGNORECASE)
+        getprefix = re.search('.*([a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}:[a-f0-9]{2}).*', entry["address"].decode("utf-8"), re.IGNORECASE)
         if getprefix is None:
             print("Malformed MAC Address: %s" % (entry["address"]))
             continue
@@ -176,7 +176,7 @@ if __name__ == "__main__":
                         "SET sleeping=1 "
                         "WHERE dns=%s", (entry["host"], ))
         else:
-            cursor.execute("REPLACE INTO macaddresses "
+            cursor.execute("REPLACE INTO ldo_macaddresses "
                         "(mac, ip, dns, vendor, last, sleeping) "
                         "VALUES (%s, %s, %s, %s, NOW(), 0)",
                         (entry["address"], entry["ip"], entry["host"], vendor))
