@@ -15,7 +15,7 @@ up to insert the entries into a database.
 Requirements
 ============
 
-* Python 2. There are minimal changes to get it working with Python 3. Mostly just swapping out MySQLdb for PyMySQL.
+* Python 3. There are minimal changes to get it working with Python 2.
 * (Recommended) The [NMAP MAC Vendor Database](https://svn.nmap.org/nmap/nmap-mac-prefixes). Typically installed in `/usr/local/share/nmap-mac-prefixes`
 
 Database Schema
